@@ -4,7 +4,7 @@ export interface GeoDBCities {
   metadata: Metadata;
 }
 
-export interface Datum {
+interface Datum {
   id:          number;
   wikiDataId:  string;
   city:        string;
@@ -20,12 +20,12 @@ export interface Datum {
 }
 
 
-export interface Link {
+interface Link {
   rel:  string;
   href: string;
 }
 
-export interface Metadata {
+interface Metadata {
   currentOffset: number;
   totalCount:    number;
 }

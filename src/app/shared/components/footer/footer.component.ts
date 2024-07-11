@@ -9,4 +9,10 @@ import { Component } from '@angular/core';
 })
 export class FooterComponent {
 
+  constructor() {}
+
+  goTo(url: string) {
+    window.open(url, "_blank");
+  }
+
 }

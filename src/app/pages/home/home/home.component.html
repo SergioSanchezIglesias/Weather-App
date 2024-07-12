@@ -1,6 +1,6 @@
 <div id="main-container">
   <div id="search-container">
-    <span>Término de búsqueda</span>
+    <span>Buscando en: {{ citySearched }}</span>
     <form id="search-form">
       <mat-form-field id="search-full-width">
         <mat-label>Busca un lugar...</mat-label>
@@ -10,9 +10,9 @@
           [formControl]="searchTerm"
           [matAutocomplete]="auto"
         />
-        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete">
+        <mat-autocomplete autoActiveFirstOption #auto="matAutocomplete" (optionSelected)="onOptionSelected($event.option.value)">
           @for (option of filteredOptions | async; track option) {
-          <mat-option [value]="option">{{ option }}</mat-option>
+          <mat-option [value]="option.city">{{ option.city + " - " + option.region}}</mat-option>
           }
         </mat-autocomplete>
       </mat-form-field>

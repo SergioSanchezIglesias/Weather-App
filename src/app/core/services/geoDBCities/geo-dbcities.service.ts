@@ -17,7 +17,7 @@ export class GeoDBCitiesService {
   constructor(private http: HttpClient) { }
 
   searchCities(searchTerm: string): Observable<GeoDBCities> {
-    const url: string = `${this.apiUrl}/cities/namePrefix=${searchTerm}`;
+    const url: string = `${this.apiUrl}/cities?&namePrefix=${searchTerm}`;
     return this.http.get<GeoDBCities>(url, { headers: this.headers });
   }
 }

@@ -1,0 +1,23 @@
+@import "../../../../assets/styles/mixins.scss";
+
+* {
+  @include reset-margins;
+}
+
+#search-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: center;
+  padding: 25px 25px 0 25px;
+}
+
+#search-form {
+  min-width: 100px;
+  max-width: 800px;
+  width: 100%;
+}
+
+#search-full-width {
+  width: 100%;
+}

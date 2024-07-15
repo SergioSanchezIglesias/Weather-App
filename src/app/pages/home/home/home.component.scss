@@ -21,3 +21,11 @@
 #search-full-width {
   width: 100%;
 }
+
+#graphs-container {
+  height: 75vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: auto;
+}

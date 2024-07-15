@@ -7,7 +7,9 @@ import { Datum, GeoDBCities } from '../../../core/interfaces/geoDBCities-Respons
 import { GeoDBCitiesService } from '../../../core/services/geoDBCities/geo-dbcities.service';
 import * as dataJSON from '../../../../assets/json/response.json';
 import { WeatherAPIService } from '../../../core/services/weatherAPI/weather-api.service';
-import { WeatherResponse } from '../../../core/interfaces/weatherResponse.interface';
+import { WeatherResponse, DatumWeather } from '../../../core/interfaces/weatherResponse.interface';
+import { Chart, registerables } from 'chart.js';
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -20,10 +22,9 @@ export class HomeComponent implements OnInit {
   filteredOptions!: Observable<Datum[]>;
   citySearched!: string;
 
-  temperature!: number;
-  humidity!: number;
-  windSpeed!: number;
-  windDirection!: number;
+  private precipChart: Chart | undefined;
+  precipitacionesData: number[] = [];
+  precipitacionesLabels: string[] = [];
 
   dataTest = dataJSON;
 
@@ -33,14 +34,30 @@ export class HomeComponent implements OnInit {
   constructor(
     private geoDBCitiesService: GeoDBCitiesService,
     private weatherAPIService: WeatherAPIService,
-  ) { }
+  ) {
+    Chart.register(...registerables);
+  }
 
   ngOnInit(): void {
+    this.citySearched = "Talavera de la Reina"
+    
     this.filteredOptions = this.searchTerm.valueChanges.pipe(
       debounceTime(800),
       startWith(''),
       switchMap(value => this._filter(value || '')),
     );
+
+    //? Carga datos por defecto para mostrar los graficos al entrar en la app.
+    const hourlyData = this.dataTest.data;
+    hourlyData.forEach(hour => {
+      const date = new Date(hour.timestamp_local);
+      if (date.getMinutes() === 0 && date.getHours() % 2 === 0) {
+        this.precipitacionesData.push(hour.precip);
+        this.precipitacionesLabels.push(`${date.getDate().toString()} - ${date.getHours().toString()}:00`);
+      }
+    });
+
+    this._drawPrecipGraph();
   }
 
   private _filter(value: string | Datum): Observable<Datum[]> {
@@ -57,24 +74,55 @@ export class HomeComponent implements OnInit {
     );
   }
 
+  private _drawPrecipGraph() {
+    const ctx = document.getElementById("precipChart") as HTMLCanvasElement;
+
+    if (this.precipChart) {
+      this.precipChart.destroy();
+    }
+
+    this.precipChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: this.precipitacionesLabels,
+        datasets: [{
+          label: 'Precipitación (mm)',
+          data: this.precipitacionesData,
+          borderColor: '#00c3ff',
+          backgroundColor: 'rgba(0, 195, 255, 0.247)',
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+      }
+    });
+  }
+
   onOptionSelected(option: Datum): void {
     this.citySearched = option.city;
     this.latitude = option.latitude;
     this.longitude = option.longitude;
 
-    // this.weatherAPIService.getWeather(this.latitude, this.longitude).subscribe((data: WeatherResponse) => {});
-    this.temperature = this._convertKelvinToCelsius(dataJSON.main.temp);
-    this.humidity = dataJSON.main.humidity;
-    this.windSpeed = dataJSON.wind.speed;
-    this.windDirection = dataJSON.wind.deg
+    this.precipitacionesData = [];
+    this.precipitacionesLabels = [];
+
+    this.weatherAPIService.getWeather(this.latitude, this.longitude).subscribe((data: WeatherResponse) => {
+      const hourlyData = data.data;
+      hourlyData.forEach((hour: DatumWeather) => {
+        const date = new Date(hour.timestamp_local);
+
+        if (date.getMinutes() === 0 && date.getHours() % 2 === 0) {
+          this.precipitacionesData.push(hour.precip);
+          this.precipitacionesLabels.push(`${date.getDate().toString()} - ${date.getHours().toString()}:00`);
+        }
+      });
+
+      this._drawPrecipGraph();
+    });
   }
 
   displayFn(option: Datum): string {
     return option ? `${option.city} - ${option.region}` : '';
   }
-
-  private _convertKelvinToCelsius(kelvin: number) {
-    return kelvin - 273.15;
-  }
-
 }

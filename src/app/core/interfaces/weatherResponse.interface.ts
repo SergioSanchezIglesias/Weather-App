@@ -1,54 +1,50 @@
 export interface WeatherResponse {
-  coord:      Coord;
-  weather:    Weather[];
-  base:       string;
-  main:       Main;
-  visibility: number;
-  wind:       Wind;
-  clouds:     Clouds;
-  dt:         number;
-  sys:        Sys;
-  timezone:   number;
-  id:         number;
-  name:       string;
-  cod:        number;
+  city_name:    string;
+  country_code: string;
+  data:         DatumWeather[];
+  lat:          number;
+  lon:          number;
+  state_code:   string;
+  timezone:     string;
 }
 
-export interface Clouds {
-  all: number;
-}
-
-export interface Coord {
-  lon: number;
-  lat: number;
-}
-
-export interface Main {
-  temp:       number;
-  feels_like: number;
-  temp_min:   number;
-  temp_max:   number;
-  pressure:   number;
-  humidity:   number;
-  sea_level:  number;
-  grnd_level: number;
-}
-
-export interface Sys {
-  country: string;
-  sunrise: number;
-  sunset:  number;
+export interface DatumWeather {
+  app_temp:        number;
+  clouds:          number;
+  clouds_hi:       number;
+  clouds_low:      number;
+  clouds_mid:      number;
+  datetime:        string;
+  dewpt:           number;
+  dhi:             number;
+  dni:             number;
+  ghi:             number;
+  ozone:           number;
+  pod:             string;
+  pop:             number;
+  precip:          number;
+  pres:            number;
+  rh:              number;
+  slp:             number;
+  snow:            number;
+  snow_depth:      number;
+  solar_rad:       number;
+  temp:            number;
+  timestamp_local: Date;
+  timestamp_utc:   Date;
+  ts:              number;
+  uv:              number;
+  vis:             number;
+  weather:         Weather;
+  wind_cdir:       string;
+  wind_cdir_full:  string;
+  wind_dir:        number;
+  wind_gust_spd:   number;
+  wind_spd:        number;
 }
 
 export interface Weather {
-  id:          number;
-  main:        string;
-  description: string;
   icon:        string;
-}
-
-export interface Wind {
-  speed: number;
-  deg:   number;
-  gust:  number;
+  description: string;
+  code:        number;
 }

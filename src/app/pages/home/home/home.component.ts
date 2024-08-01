@@ -18,18 +18,27 @@ import { Chart, registerables } from 'chart.js';
   styleUrl: './home.component.scss'
 })
 export class HomeComponent implements OnInit {
-  searchTerm = new FormControl('');
-  filteredOptions!: Observable<Datum[]>;
-  citySearched!: string;
-
-  private precipChart: Chart | undefined;
-  precipitacionesData: number[] = [];
-  precipitacionesLabels: string[] = [];
-
   dataTest = dataJSON;
 
-  private latitude!: number;
-  private longitude!: number;
+  searchTerm =           new FormControl('');
+  filteredOptions!:      Observable<Datum[]>;
+  citySearched!:         string;
+
+  //? Variables para graficos
+  private precipChart:   Chart | undefined;
+  precipitacionesData:   number[] = [];
+  precipitacionesLabels: string[] = [];
+
+  private tempChart:     Chart | undefined;
+  tempData:              number[] = [];
+  tempLabels:            string[] = [];
+
+  //? Varibales para las cards
+  averageTemp!:          number;
+  probPrecip!:           number;
+  
+  private latitude!:     number;
+  private longitude!:    number;
 
   constructor(
     private geoDBCitiesService: GeoDBCitiesService,
@@ -40,7 +49,7 @@ export class HomeComponent implements OnInit {
 
   ngOnInit(): void {
     this.citySearched = "Talavera de la Reina"
-    
+
     this.filteredOptions = this.searchTerm.valueChanges.pipe(
       debounceTime(800),
       startWith(''),
@@ -52,12 +61,17 @@ export class HomeComponent implements OnInit {
     hourlyData.forEach(hour => {
       const date = new Date(hour.timestamp_local);
       if (date.getMinutes() === 0 && date.getHours() % 2 === 0) {
-        this.precipitacionesData.push(hour.precip);
+        this.precipitacionesData.push(hour.pop);
         this.precipitacionesLabels.push(`${date.getDate().toString()} - ${date.getHours().toString()}:00`);
+
+        this.tempData.push(hour.temp);
+        this.tempLabels.push(`${date.getDate().toString()} - ${date.getHours().toString()}:00`)
       }
     });
 
-    this._drawPrecipGraph();
+    this.averageTemp = this._getAverageTemp();
+    this.probPrecip = this._getProbPrecip();
+    this._drawAllCharts();
   }
 
   private _filter(value: string | Datum): Observable<Datum[]> {
@@ -74,7 +88,12 @@ export class HomeComponent implements OnInit {
     );
   }
 
-  private _drawPrecipGraph() {
+  private _drawAllCharts() {
+    this._drawPrecipChart();
+    this._drawTempChart();
+  }
+
+  private _drawPrecipChart() {
     const ctx = document.getElementById("precipChart") as HTMLCanvasElement;
 
     if (this.precipChart) {
@@ -86,7 +105,7 @@ export class HomeComponent implements OnInit {
       data: {
         labels: this.precipitacionesLabels,
         datasets: [{
-          label: 'Precipitación (mm)',
+          label: 'Precipitaciones (%)',
           data: this.precipitacionesData,
           borderColor: '#00c3ff',
           backgroundColor: 'rgba(0, 195, 255, 0.247)',
@@ -99,6 +118,55 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  private _drawTempChart() {
+    const ctx = document.getElementById("tempChart") as HTMLCanvasElement;
+
+    if (this.tempChart) {
+      this.tempChart.destroy();
+    }
+
+    this.tempChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: this.tempLabels,
+        datasets: [{
+          label: 'Temperatura (ºC)',
+          data: this.tempData,
+          borderColor: '#00c3ff',
+          backgroundColor: 'rgba(0, 195, 255, 0.247)',
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+      }
+    });
+  }
+
+  private _getAverageTemp(): number {
+    if (this.dataTest.data.length === 0) {
+      console.log("No hay datos para calcular la temperatura promedio.");
+      return 0;  // Termina temprano si no hay datos
+    }
+
+    const totalTemp = this.dataTest.data.reduce((acc, curr) => acc + curr.temp, 0);
+    const averageTemp = parseFloat((totalTemp / this.dataTest.data.length).toFixed(1));
+
+    return averageTemp;
+  }
+
+  private _getProbPrecip(): number {
+    if (this.dataTest.data.length === 0) {
+      console.log("No hay datos para calcular la probabilidad de lluvia.");
+      return 0;  // Termina temprano si no hay datos
+    }
+
+    const totalPrecip = this.dataTest.data.reduce((acc, curr) => acc + curr.pop, 0);
+    const probPrecip = parseFloat((totalPrecip / this.dataTest.data.length).toFixed(1));
+
+    return probPrecip;
+  }
+
   onOptionSelected(option: Datum): void {
     this.citySearched = option.city;
     this.latitude = option.latitude;
@@ -109,16 +177,26 @@ export class HomeComponent implements OnInit {
 
     this.weatherAPIService.getWeather(this.latitude, this.longitude).subscribe((data: WeatherResponse) => {
       const hourlyData = data.data;
+
+      //? Calculo de la temperatura media
+      const totalTemp = hourlyData.reduce((acc, curr) => acc + curr.temp, 0);
+      this.averageTemp = parseFloat((totalTemp / hourlyData.length).toFixed(1));
+
+      //? Calculo de la probabilidad de lluevia
+      const totalPrecip = hourlyData.reduce((acc, curr) => acc + curr.pop, 0);
+      this.probPrecip = parseFloat((totalPrecip / hourlyData.length).toFixed(1));
+
+      //? Calculo de las precipitaciones y temperatura cada 2 horas
       hourlyData.forEach((hour: DatumWeather) => {
         const date = new Date(hour.timestamp_local);
 
         if (date.getMinutes() === 0 && date.getHours() % 2 === 0) {
-          this.precipitacionesData.push(hour.precip);
+          this.precipitacionesData.push(hour.pop);
           this.precipitacionesLabels.push(`${date.getDate().toString()} - ${date.getHours().toString()}:00`);
         }
       });
 
-      this._drawPrecipGraph();
+      this._drawAllCharts();
     });
   }
 

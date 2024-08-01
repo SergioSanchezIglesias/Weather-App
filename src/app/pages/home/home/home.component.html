@@ -28,8 +28,37 @@
 
   <mat-divider></mat-divider>
 
-  <div id="graphs-container">
-    <canvas id="precipChart"></canvas>
-    ho
+  <div id="app-container">
+    <div id="graphs-container">
+      <div class="one-graph-container">
+        <canvas id="precipChart"></canvas>
+      </div>
+  
+      <mat-divider></mat-divider>
+  
+      <div class="one-graph-container">
+        <canvas id="tempChart"></canvas>
+      </div>
+    </div>
+
+    <div id="cards-container">
+      <mat-card class="card-styles">
+        <mat-card-header>
+          <mat-card-title>Temperatura media</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>{{ averageTemp }} ºC</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="card-styles">
+        <mat-card-header>
+          <mat-card-title>Probabilidad de lluvias</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>{{ probPrecip }}%</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
 </div>
